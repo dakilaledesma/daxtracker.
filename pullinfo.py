@@ -450,7 +450,7 @@ for f in sifted:
     flavor_text = message[0]
     message = message[1]
     logo = get_logo(f["via"])
-    ms_date_dict[time_eastern.strftime("%b. %d, %Y")].append(f"""
+    ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""
         <span class="flavor">{logo} {flavor_text}</span><br>
         {message}<br>
         <span class="datet">{time}</span>

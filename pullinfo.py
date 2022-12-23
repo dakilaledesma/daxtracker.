@@ -450,11 +450,22 @@ for f in sifted:
     flavor_text = message[0]
     message = message[1]
     logo = get_logo(f["via"])
-    ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""
-        <span class="flavor">{logo} {flavor_text}</span><br>
-        {message}<br>
-        <span class="datet">{time}</span>
-    """)
+
+    if "BCBS" not in flavor_text:
+        ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""
+            <span class="flavor">{logo} {flavor_text}</span><br>
+            {message}<br>
+            <span class="datet">{time}</span>
+        """)
+    else:
+        ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""
+            <span class="flavor">{logo} {flavor_text}</span><br>
+            Obfuscated: Industry/non-academia related work. Todoist ID 
+            <a href="https://docs.google.com/spreadsheets/d/1UIy_M_aaMfCEhAZz9godjoRMCujdEmdT_NnzDaZF7dA/edit?usp=sharing">{f["id"].replace("todoist_", '')}</a>.<br>
+            <span class="datet">{time}</span>
+        """)
+
+
     # ms.append(f"""
     #     <span class="flavor">{logo} {flavor_text}</span><br>
     #     {message}<br>

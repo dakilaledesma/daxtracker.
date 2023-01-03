@@ -411,11 +411,19 @@ for f in td_open:
     flavor_text = message[0]
     message = message[1]
     logo = get_logo(f["via"])
-    ms.append(f"""
-        <span class="flavor">{logo} {flavor_text}</span><br>
-        {message}<br>
-        <span class="datet">{time}</span>
-    """)
+    if "BCBS" not in flavor_text:
+        ms.append(f"""
+            <span class="flavor">{logo} {flavor_text}</span><br>
+            {message}<br>
+            <span class="datet">{time}</span>
+        """)
+    else:
+        ms.append(f"""
+            <span class="flavor">{logo} {flavor_text}</span><br>
+            Obfuscated: Industry/non-academia related work. Todoist ID {f["id"].replace("todoist_", '')}.<br>
+            <span class="datet">{time}</span>
+        """)
+
 compile_ms = '\n<hr style="margin:0.42rem">\n'.join(ms)
 markdown_string += f'''
 <div class="message">

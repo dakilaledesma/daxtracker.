@@ -329,9 +329,11 @@ def to_eastern(_time):
     return _time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone("US/Eastern"))
 
 
-def get_logo(via):
+def get_logo(via, flavor_text=''):
     if via == "GitHub":
         _logo = '<img src="https://www.google.com/s2/favicons?domain=www.github.com" height="11" style="display: inline; margin: 0rem">'
+    elif all([via == "Todoist", "BCBS" in flavor_text]):
+        _logo = '<img src="https://www.google.com/s2/favicons?domain=www.bcbst-medicare.com" height="11" style="display: inline; margin: 0rem">'
     elif via == "Todoist":
         _logo = '<img src="https://www.google.com/s2/favicons?domain=www.todoist.com" height="11" style="display: inline; margin: 0rem">'
     else:
@@ -410,7 +412,7 @@ for f in td_open:
     message = f["message"].split("||")
     flavor_text = message[0]
     message = message[1]
-    logo = get_logo(f["via"])
+    logo = get_logo(f["via"], flavor_text)
     if "BCBS" not in flavor_text:
         ms.append(f"""
             <span class="flavor">{logo} {flavor_text}</span><br>

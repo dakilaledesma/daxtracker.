@@ -459,7 +459,7 @@ for f in sifted:
     message = f["message"].split("||")
     flavor_text = message[0]
     message = message[1]
-    logo = get_logo(f["via"])
+    logo = get_logo(f["via"], flavor_text)
 
     if "BCBS" not in flavor_text:
         ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""

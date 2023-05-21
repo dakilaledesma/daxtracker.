@@ -66,7 +66,7 @@ def generate_heatmap(data):
     dates = [d.date() for d in dates]
     contrib_dict = defaultdict(int)
     for ts in data:
-        date = datetime.datetime.fromtimestamp(ts).date()
+        date = to_eastern(datetime.datetime.fromtimestamp(ts)).date()
         start_date = datetime.datetime.strptime('19062022', "%d%m%Y").date()
         if date in dates and start_date < date:
             contrib_dict[date] += 1

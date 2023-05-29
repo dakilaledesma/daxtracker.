@@ -346,7 +346,6 @@ def get_logo(via, flavor_text=''):
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 ss_id = tokens["sheet_id"]
-SAMPLE_RANGE_NAME = 'A:D'
 
 creds = service_account.Credentials.from_service_account_file(
     tokens["g_token_file"], scopes=SCOPES)
@@ -354,7 +353,7 @@ creds = service_account.Credentials.from_service_account_file(
 service = build('sheets', 'v4', credentials=creds)
 sheet = service.spreadsheets()
 
-event_data = sheet.values().get(spreadsheetId=ss_id, range="A:E").execute()["values"]
+event_data = sheet.values().get(spreadsheetId=ss_id, range="Sheet1!A:E").execute()["values"]
 event_dict = {v[0]: v[1:5] for v in event_data[1:]}
 
 github_events = gith()
@@ -370,11 +369,11 @@ for ev in finished:
 
 if len(not_in_sheet_evs) > 0:
     sheet.values().append(
-        spreadsheetId=ss_id, range=f"A:E", valueInputOption="RAW",
+        spreadsheetId=ss_id, range=f"Sheet1!A:E", valueInputOption="RAW",
         body={"values": not_in_sheet_evs}).execute()
 
 finished = []
-event_data = sheet.values().get(spreadsheetId=ss_id, range="A:E").execute()["values"]
+event_data = sheet.values().get(spreadsheetId=ss_id, range="Sheet1!A:E").execute()["values"]
 event_dict = {v[0]: v[1:5] for v in event_data[1:]}
 for k, v in event_dict.items():
     via = v[0]

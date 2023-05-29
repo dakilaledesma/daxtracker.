@@ -130,3 +130,6 @@ dmypy.json
 tokens/
 
 .idea
+data/
+
+.DS_Store

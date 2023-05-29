@@ -319,7 +319,7 @@ def todoist_finished(event_dict):
         mtime = result["completed_at"]
         dtime = datetime.datetime.strptime(mtime, "%Y-%m-%dT%H:%M:%S.%fZ")
         message_list.append(
-            {"time": dtime, "message": m, "via": "Todoist", "id": f'todoist_{result["task_id"]}', "mtime": mtime,
+            {"time": dtime, "message": m, "via": "Todoist", "id": f'todoist_{result["id"]}', "mtime": mtime,
              "version": version})
 
     return message_list

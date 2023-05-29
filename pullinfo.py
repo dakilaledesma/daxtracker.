@@ -265,9 +265,10 @@ def todoist_open():
             sect_id_text = ''
 
         m = f"{prio_text} Todoist task{sect_id_text}||{result['content']}{desc_text}"
-        message_list.append(
-            {"time": dtime, "message": m, "via": "Todoist", "id": f'todoist_{result["id"]}', "mtime": mtime,
-             "version": version, "priority": result["priority"]})
+        if result['content'][0] != "*":
+            message_list.append(
+                {"time": dtime, "message": m, "via": "Todoist", "id": f'todoist_{result["id"]}', "mtime": mtime,
+                 "version": version, "priority": result["priority"]})
     return message_list
 
 

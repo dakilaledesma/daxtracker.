@@ -18,13 +18,21 @@ from collections import defaultdict
 import numpy as np
 import json
 
-with open('secrets/secrets.json') as secrets_file:
+with open('tokens/secrets.json') as secrets_file:
     tokens = json.load(secrets_file)
 
 with open("dakilaledesma.github.io/_config.yml") as f:
     config = yaml.safe_load(f)
 
 version = str([int(a) for a in str(config["version"]).split('.')][-1])
+
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+ss_id = tokens["sheet_id"]
+
+creds = service_account.Credentials.from_service_account_file(
+    tokens["g_token_file"], scopes=SCOPES)
+service = build('sheets', 'v4', credentials=creds)
+sheet = service.spreadsheets()
 
 
 def new_day():
@@ -240,13 +248,45 @@ def todoist_open():
     query_url = f"https://api.todoist.com/rest/v2/tasks?project_id={tokens['todoist_projid']}"
     res = requests.get(query_url, headers=headers)
     r = res.json()
+
+    # parent_data = sheet.values().get(spreadsheetId=ss_id, range="Sheet2!A:B").execute()
+    # if "values" in parent_data.keys():
+    #     parent_data = parent_data["values"]
+    #     parent_dict = {v[0]: v[1] for v in parent_data[1:]}
+    # else:
+    #     parent_dict = {}
+
+    results = {}
+    parents = {}
     for result in r:
+        query_url = f"https://api.todoist.com/sync/v9/items/get?item_id={result['id']}"
+        res = requests.get(query_url, headers=headers)
+        results[result["id"]] = result
+
+    for result in results.values():
         query_url = f"https://api.todoist.com/sync/v9/items/get?item_id={result['id']}"
         res = requests.get(query_url, headers=headers)
         item = res.json()["item"]
         description = item["description"]
         section_id = item["section_id"]
         mtime = result["created_at"]
+        id = result["id"]
+        item_parents = {}
+
+        current_item = result
+        while True:
+            if current_item["parent_id"] is None:
+                break
+            else:
+                current_item = results[current_item["parent_id"]]
+                current_item_text = current_item["content"]
+                if current_item_text[:2] == "* ":
+                    current_item_text = current_item_text[2:]
+                item_parents[current_item["id"]] = current_item_text
+
+        # if id not in parent_dict.keys():
+        #     missing_tasks.append([id, result["content"]])
+
         dtime = datetime.datetime.strptime(mtime, "%Y-%m-%dT%H:%M:%S.%fZ")
 
         if result["priority"] != 1:
@@ -260,11 +300,19 @@ def todoist_open():
             desc_text = ''
 
         if all([section_id != 0, section_id is not None]):
-            sect_id_text = f' under <b>{section_dict[section_id]}</b>'
+            if len(item_parents) != 0:
+                hierarchy_list = [v for v in item_parents.values()]
+                hierarchy_list.reverse()
+                hierarchy_flavor_text = '/' + '/'.join(hierarchy_list)
+            else:
+                hierarchy_flavor_text = ''
+
+            sect_id_text = f' under <b>{section_dict[section_id]}{hierarchy_flavor_text}</b>'
         else:
             sect_id_text = ''
 
         m = f"{prio_text} Todoist task{sect_id_text}||{result['content']}{desc_text}"
+
         if result['content'][0] != "*":
             message_list.append(
                 {"time": dtime, "message": m, "via": "Todoist", "id": f'todoist_{result["id"]}', "mtime": mtime,
@@ -342,16 +390,6 @@ def get_logo(via, flavor_text=''):
 
     return _logo
 
-
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-
-ss_id = tokens["sheet_id"]
-
-creds = service_account.Credentials.from_service_account_file(
-    tokens["g_token_file"], scopes=SCOPES)
-
-service = build('sheets', 'v4', credentials=creds)
-sheet = service.spreadsheets()
 
 event_data = sheet.values().get(spreadsheetId=ss_id, range="Sheet1!A:E").execute()["values"]
 event_dict = {v[0]: v[1:5] for v in event_data[1:]}

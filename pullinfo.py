@@ -34,6 +34,24 @@ creds = service_account.Credentials.from_service_account_file(
 service = build('sheets', 'v4', credentials=creds)
 sheet = service.spreadsheets()
 
+event_data = sheet.values().get(spreadsheetId=ss_id, range="Sheet1!A:E").execute()["values"]
+event_dict = {v[0]: v[1:5] for v in event_data[1:]}
+parent_dict = {}
+for v in event_data[1:]:
+    if "todoist" in v[0] and "||" in v[2]:
+        main_text = v[2].split("||")[1]
+        if "<br>" in main_text:
+            main_text = main_text.split("<br>")[0]
+
+        parent_dict[v[0].split('_')[1]] = main_text
+
+parent_sheet = sheet.values().get(spreadsheetId=ss_id, range="Sheet2!A:B").execute()
+if "values" in parent_sheet.keys():
+    parent_sheet = parent_sheet["values"]
+    has_parent = {v[0]: v[1] for v in parent_sheet}
+else:
+    has_parent = {}
+missing_children = []
 
 def new_day():
     current = datetime.datetime.today()
@@ -249,28 +267,24 @@ def todoist_open():
     res = requests.get(query_url, headers=headers)
     r = res.json()
 
-    # parent_data = sheet.values().get(spreadsheetId=ss_id, range="Sheet2!A:B").execute()
-    # if "values" in parent_data.keys():
-    #     parent_data = parent_data["values"]
-    #     parent_dict = {v[0]: v[1] for v in parent_data[1:]}
-    # else:
-    #     parent_dict = {}
-
     results = {}
-    parents = {}
+    ress = {}
     for result in r:
         query_url = f"https://api.todoist.com/sync/v9/items/get?item_id={result['id']}"
         res = requests.get(query_url, headers=headers)
         results[result["id"]] = result
+        ress[result["id"]] = res
+        
+        content_text = result["content"]
+        if content_text[:2] == "* ":
+            content_text = content_text[2:]
+        parent_dict[result["id"]] = content_text
 
-    for result in results.values():
-        query_url = f"https://api.todoist.com/sync/v9/items/get?item_id={result['id']}"
-        res = requests.get(query_url, headers=headers)
+    for result, res in zip(results.values(), ress.values()):
         item = res.json()["item"]
         description = item["description"]
         section_id = item["section_id"]
         mtime = result["created_at"]
-        id = result["id"]
         item_parents = {}
 
         current_item = result
@@ -278,6 +292,11 @@ def todoist_open():
             if current_item["parent_id"] is None:
                 break
             else:
+                if current_item["id"] not in has_parent.keys():
+                    sheet.values().append(
+                        spreadsheetId=ss_id, range=f"Sheet2!A:B", valueInputOption="RAW",
+                        body={"values": [[current_item["id"], current_item["parent_id"]]]}).execute()
+
                 current_item = results[current_item["parent_id"]]
                 current_item_text = current_item["content"]
                 if current_item_text[:2] == "* ":
@@ -303,11 +322,11 @@ def todoist_open():
             if len(item_parents) != 0:
                 hierarchy_list = [v for v in item_parents.values()]
                 hierarchy_list.reverse()
-                hierarchy_flavor_text = '/' + '/'.join(hierarchy_list)
+                hierarchy_flavor_text = '</b> under <b>' + '/'.join(hierarchy_list)
             else:
                 hierarchy_flavor_text = ''
 
-            sect_id_text = f' under <b>{section_dict[section_id]}{hierarchy_flavor_text}</b>'
+            sect_id_text = f' for <b>{section_dict[section_id]}{hierarchy_flavor_text}</b>'
         else:
             sect_id_text = ''
 
@@ -317,6 +336,7 @@ def todoist_open():
             message_list.append(
                 {"time": dtime, "message": m, "via": "Todoist", "id": f'todoist_{result["id"]}', "mtime": mtime,
                  "version": version, "priority": result["priority"]})
+
     return message_list
 
 
@@ -347,6 +367,18 @@ def todoist_finished(event_dict):
                 desc_text = f'<br><span class="desc">{description}</span>'
             else:
                 desc_text = ''
+
+            # item_parents = {}
+            # current_item = result
+            # while True:
+            #     if current_item["parent_id"] is None:
+            #         break
+            #     else:
+            #         current_item = results[current_item["parent_id"]]
+            #         current_item_text = current_item["content"]
+            #         if current_item_text[:2] == "* ":
+            #             current_item_text = current_item_text[2:]
+            #         item_parents[current_item["id"]] = current_item_text
 
             if section_id is not None:
                 sect_id_text = f' under <b>{section_dict[section_id]}</b>'
@@ -389,10 +421,6 @@ def get_logo(via, flavor_text=''):
         return
 
     return _logo
-
-
-event_data = sheet.values().get(spreadsheetId=ss_id, range="Sheet1!A:E").execute()["values"]
-event_dict = {v[0]: v[1:5] for v in event_data[1:]}
 
 github_events = gith()
 td_open = todoist_open()

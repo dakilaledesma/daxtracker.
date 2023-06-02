@@ -334,7 +334,7 @@ def todoist_open():
             else:
                 at_flavor_text = ''
 
-            sect_id_text = f' under <b>{section_dict[section_id]}{hierarchy_flavor_text}{at_flavor_text}</b>'
+            sect_id_text = f' in <b>{section_dict[section_id]}{hierarchy_flavor_text}{at_flavor_text}</b>'
         else:
             sect_id_text = ''
 
@@ -395,7 +395,7 @@ def todoist_finished(event_dict):
                 else:
                     at_flavor_text = ''
 
-                sect_id_text = f' under <b>{section_dict[section_id]}{at_flavor_text}</b>'
+                sect_id_text = f' in <b>{section_dict[section_id]}{at_flavor_text}</b>'
                 # sect_id_text = f' under <b>{section_dict[section_id]}</b>'
             else:
                 sect_id_text = ''

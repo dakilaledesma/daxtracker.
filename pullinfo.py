@@ -18,6 +18,8 @@ from collections import defaultdict
 import numpy as np
 import json
 
+debugging = False
+
 with open('tokens/secrets.json') as secrets_file:
     tokens = json.load(secrets_file)
 
@@ -595,38 +597,41 @@ Less
 <span style="color: #00441b;">■</span>
 More<br>
 Currently tracking <b>@replace_me</b> contributions</span>
+'''.replace("@replace_me", str(len(heatmap_data)))
 
+"""
 ### Workouts
 <img style="width:100%;" src="/public/workout_heatmap.png?{{ site.version }}" alt="Contributions calendar">
 <span class="datet" style="font-size: 60%; text-align: right; display: block;">
 (Workout data is still a WIP)</span>
-'''.replace("@replace_me", str(len(heatmap_data)))
+"""
 
-repo = Repo("dakilaledesma.github.io/")
-repo.remotes.origin.pull()
-event_file = open("dakilaledesma.github.io/_posts/2022-07-12-events.md")
-event_str = event_file.read()
-event_file.close()
-if markdown_string != event_str or new_day():
-    event_file_w = open("dakilaledesma.github.io/_posts/2022-07-12-events.md", 'w')
-    event_file_w.write(markdown_string)
-    event_file_w.close()
+if not debugging:
+    repo = Repo("dakilaledesma.github.io/")
+    repo.remotes.origin.pull()
+    event_file = open("dakilaledesma.github.io/_posts/2022-07-12-events.md")
+    event_str = event_file.read()
+    event_file.close()
+    if markdown_string != event_str or new_day():
+        event_file_w = open("dakilaledesma.github.io/_posts/2022-07-12-events.md", 'w')
+        event_file_w.write(markdown_string)
+        event_file_w.close()
 
-    contrib_file_w = open("dakilaledesma.github.io/_posts/2022-07-13-contributions.md", 'w')
-    contrib_file_w.write(contrib_string)
-    contrib_file_w.close()
+        contrib_file_w = open("dakilaledesma.github.io/_posts/2022-07-13-contributions.md", 'w')
+        contrib_file_w.write(contrib_string)
+        contrib_file_w.close()
 
-    with open("dakilaledesma.github.io/_config.yml") as f:
-        config = yaml.safe_load(f)
+        with open("dakilaledesma.github.io/_config.yml") as f:
+            config = yaml.safe_load(f)
 
-    version = [int(a) for a in str(config["version"]).split('.')]
-    version[-1] += 1
-    config["version"] = '.'.join([str(b) for b in version])
+        version = [int(a) for a in str(config["version"]).split('.')]
+        version[-1] += 1
+        config["version"] = '.'.join([str(b) for b in version])
 
-    with open("dakilaledesma.github.io/_config.yml", "w") as f:
-        yaml.dump(config, f)
+        with open("dakilaledesma.github.io/_config.yml", "w") as f:
+            yaml.dump(config, f)
 
-    repo.git.add(update=True)
-    repo.index.commit("Automated machine user commit. Beep boop!")
-    origin = repo.remote(name='origin')
-    origin.push()
+        repo.git.add(update=True)
+        repo.index.commit("Automated machine user commit. Beep boop!")
+        origin = repo.remote(name='origin')
+        origin.push()

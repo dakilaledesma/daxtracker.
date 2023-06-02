@@ -326,7 +326,13 @@ def todoist_open():
             else:
                 hierarchy_flavor_text = ''
 
-            sect_id_text = f' for <b>{section_dict[section_id]}{hierarchy_flavor_text}</b>'
+            if result["due"] is not None:
+                at_datetime = datetime.datetime.strptime(result["due"]["datetime"], "%Y-%m-%dT%H:%M:%S")
+                at_flavor_text = f"</b> on <b>{at_datetime.strftime('%m/%d')} at {at_datetime.strftime('%H:%M')}"
+            else:
+                at_flavor_text = ''
+
+            sect_id_text = f' under <b>{section_dict[section_id]}{hierarchy_flavor_text}{at_flavor_text}</b>'
         else:
             sect_id_text = ''
 
@@ -381,7 +387,14 @@ def todoist_finished(event_dict):
             #         item_parents[current_item["id"]] = current_item_text
 
             if section_id is not None:
-                sect_id_text = f' under <b>{section_dict[section_id]}</b>'
+                if res.json()["item"]["due"] is not None:
+                    at_datetime = datetime.datetime.strptime(res.json()["item"]["due"]["datetime"], "%Y-%m-%dT%H:%M:%S")
+                    at_flavor_text = f" on {at_datetime.strftime('%m/%d')} at {at_datetime.strftime('%H:%M')}"
+                else:
+                    at_flavor_text = ''
+
+                sect_id_text = f' under <b>{section_dict[section_id]}{at_flavor_text}</b>'
+                # sect_id_text = f' under <b>{section_dict[section_id]}</b>'
             else:
                 sect_id_text = ''
 
@@ -582,6 +595,11 @@ Less
 <span style="color: #00441b;">■</span>
 More<br>
 Currently tracking <b>@replace_me</b> contributions</span>
+
+### Workouts
+<img style="width:100%;" src="/public/workout_heatmap.png?{{ site.version }}" alt="Contributions calendar">
+<span class="datet" style="font-size: 60%; text-align: right; display: block;">
+(Workout data is still a WIP)</span>
 '''.replace("@replace_me", str(len(heatmap_data)))
 
 repo = Repo("dakilaledesma.github.io/")

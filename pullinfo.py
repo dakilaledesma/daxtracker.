@@ -432,7 +432,7 @@ for f in td_open:
             if word.lower() in allowed_words:
                 redacted_message.append(word)
             else:
-                redacted_message.append(f'<font color="#fcd9d9">{"█" * len(word)}</font>')
+                redacted_message.append(f'<span style="text-decoration: underline dotted;">{" " * len(word)}</span>')
 
         ms.append(f"""
             <span class="flavor">{logo} {flavor_text}</span><br>
@@ -487,7 +487,7 @@ for f in sifted:
             if word.lower() in allowed_words:
                 redacted_message.append(word)
             else:
-                redacted_message.append(f'<font color="#fcd9d9">{"█" * len(word)}</font>')
+                redacted_message.append(f'<span style="text-decoration: underline dotted;">{" " * len(word)}</span>')
 
         ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""
             <span class="flavor">{logo} {flavor_text}</span><br>

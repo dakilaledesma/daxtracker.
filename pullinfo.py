@@ -18,9 +18,7 @@ from collections import defaultdict
 import numpy as np
 import json
 
-debugging = False
-
-with open('tokens/secrets.json') as secrets_file:
+with open('secrets/secrets.json') as secrets_file:
     tokens = json.load(secrets_file)
 
 with open("dakilaledesma.github.io/_config.yml") as f:
@@ -28,32 +26,6 @@ with open("dakilaledesma.github.io/_config.yml") as f:
 
 version = str([int(a) for a in str(config["version"]).split('.')][-1])
 
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-ss_id = tokens["sheet_id"]
-
-creds = service_account.Credentials.from_service_account_file(
-    tokens["g_token_file"], scopes=SCOPES)
-service = build('sheets', 'v4', credentials=creds)
-sheet = service.spreadsheets()
-
-event_data = sheet.values().get(spreadsheetId=ss_id, range="Sheet1!A:E").execute()["values"]
-event_dict = {v[0]: v[1:5] for v in event_data[1:]}
-parent_dict = {}
-for v in event_data[1:]:
-    if "todoist" in v[0] and "||" in v[2]:
-        main_text = v[2].split("||")[1]
-        if "<br>" in main_text:
-            main_text = main_text.split("<br>")[0]
-
-        parent_dict[v[0].split('_')[1]] = main_text
-
-parent_sheet = sheet.values().get(spreadsheetId=ss_id, range="Sheet2!A:B").execute()
-if "values" in parent_sheet.keys():
-    parent_sheet = parent_sheet["values"]
-    has_parent = {v[0]: v[1] for v in parent_sheet}
-else:
-    has_parent = {}
-missing_children = []
 
 def new_day():
     current = datetime.datetime.today()
@@ -208,23 +180,24 @@ def gith():
                         continue
 
                     m = f"GitHub commit to <b>{repo}</b>||{message}"
-                   
+
                     if idx != 0:
                         try:
                             message_list.append(
-                                {"time": dtime, "message": m, "via": "GitHub", "id": f'github_{result["id"]}_{idx}', "mtime": mtime,
-                                "version": version})
+                                {"time": dtime, "message": m, "via": "GitHub", "id": f'github_{result["id"]}_{idx}',
+                                 "mtime": mtime,
+                                 "version": version})
                         except Exception as e:
-                             print(e)
+                            print(e)
                     else:
                         try:
                             message_list.append(
-                                {"time": dtime, "message": m, "via": "GitHub", "id": f'github_{result["id"]}', "mtime": mtime,
-                                "version": version})
+                                {"time": dtime, "message": m, "via": "GitHub", "id": f'github_{result["id"]}',
+                                 "mtime": mtime,
+                                 "version": version})
                         except Exception as e:
                             print(e)
             continue
-
 
         if result["type"] == "CreateEvent":
             m = f"GitHub repository created||{repo}"
@@ -268,46 +241,13 @@ def todoist_open():
     query_url = f"https://api.todoist.com/rest/v2/tasks?project_id={tokens['todoist_projid']}"
     res = requests.get(query_url, headers=headers)
     r = res.json()
-
-    results = {}
-    ress = {}
     for result in r:
         query_url = f"https://api.todoist.com/sync/v9/items/get?item_id={result['id']}"
         res = requests.get(query_url, headers=headers)
-        results[result["id"]] = result
-        ress[result["id"]] = res
-        
-        content_text = result["content"]
-        if content_text[:2] == "* ":
-            content_text = content_text[2:]
-        parent_dict[result["id"]] = content_text
-
-    for result, res in zip(results.values(), ress.values()):
         item = res.json()["item"]
         description = item["description"]
         section_id = item["section_id"]
         mtime = result["created_at"]
-        item_parents = {}
-
-        current_item = result
-        while True:
-            if current_item["parent_id"] is None:
-                break
-            else:
-                if current_item["id"] not in has_parent.keys():
-                    sheet.values().append(
-                        spreadsheetId=ss_id, range=f"Sheet2!A:B", valueInputOption="RAW",
-                        body={"values": [[current_item["id"], current_item["parent_id"]]]}).execute()
-
-                current_item = results[current_item["parent_id"]]
-                current_item_text = current_item["content"]
-                if current_item_text[:2] == "* ":
-                    current_item_text = current_item_text[2:]
-                item_parents[current_item["id"]] = current_item_text
-
-        # if id not in parent_dict.keys():
-        #     missing_tasks.append([id, result["content"]])
-
         dtime = datetime.datetime.strptime(mtime, "%Y-%m-%dT%H:%M:%S.%fZ")
 
         if result["priority"] != 1:
@@ -321,30 +261,15 @@ def todoist_open():
             desc_text = ''
 
         if all([section_id != 0, section_id is not None]):
-            if len(item_parents) != 0:
-                hierarchy_list = [v for v in item_parents.values()]
-                hierarchy_list.reverse()
-                hierarchy_flavor_text = '</b> under <b>' + '/'.join(hierarchy_list)
-            else:
-                hierarchy_flavor_text = ''
-
-            if result["due"] is not None:
-                at_datetime = datetime.datetime.strptime(result["due"]["datetime"], "%Y-%m-%dT%H:%M:%S")
-                at_flavor_text = f"</b> on <b>{at_datetime.strftime('%m/%d')} at {at_datetime.strftime('%H:%M')}"
-            else:
-                at_flavor_text = ''
-
-            sect_id_text = f' in <b>{section_dict[section_id]}{hierarchy_flavor_text}{at_flavor_text}</b>'
+            sect_id_text = f' under <b>{section_dict[section_id]}</b>'
         else:
             sect_id_text = ''
 
         m = f"{prio_text} Todoist task{sect_id_text}||{result['content']}{desc_text}"
-
         if result['content'][0] != "*":
             message_list.append(
                 {"time": dtime, "message": m, "via": "Todoist", "id": f'todoist_{result["id"]}', "mtime": mtime,
                  "version": version, "priority": result["priority"]})
-
     return message_list
 
 
@@ -376,27 +301,8 @@ def todoist_finished(event_dict):
             else:
                 desc_text = ''
 
-            # item_parents = {}
-            # current_item = result
-            # while True:
-            #     if current_item["parent_id"] is None:
-            #         break
-            #     else:
-            #         current_item = results[current_item["parent_id"]]
-            #         current_item_text = current_item["content"]
-            #         if current_item_text[:2] == "* ":
-            #             current_item_text = current_item_text[2:]
-            #         item_parents[current_item["id"]] = current_item_text
-
             if section_id is not None:
-                if res.json()["item"]["due"] is not None:
-                    at_datetime = datetime.datetime.strptime(res.json()["item"]["due"]["datetime"], "%Y-%m-%dT%H:%M:%S")
-                    at_flavor_text = f" on {at_datetime.strftime('%m/%d')} at {at_datetime.strftime('%H:%M')}"
-                else:
-                    at_flavor_text = ''
-
-                sect_id_text = f' in <b>{section_dict[section_id]}{at_flavor_text}</b>'
-                # sect_id_text = f' under <b>{section_dict[section_id]}</b>'
+                sect_id_text = f' under <b>{section_dict[section_id]}</b>'
             else:
                 sect_id_text = ''
 
@@ -436,6 +342,20 @@ def get_logo(via, flavor_text=''):
         return
 
     return _logo
+
+
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+
+ss_id = tokens["sheet_id"]
+
+creds = service_account.Credentials.from_service_account_file(
+    tokens["g_token_file"], scopes=SCOPES)
+
+service = build('sheets', 'v4', credentials=creds)
+sheet = service.spreadsheets()
+
+event_data = sheet.values().get(spreadsheetId=ss_id, range="Sheet1!A:E").execute()["values"]
+event_dict = {v[0]: v[1:5] for v in event_data[1:]}
 
 github_events = gith()
 td_open = todoist_open()
@@ -488,6 +408,12 @@ title: Events
 
 markdown_string += '\n### In-progress Items\n'
 ms = []
+allowed_words = "investigate on meeting send respond response email build code new to test modify and create data " \
+                "DSCoE rename finish convert implementation write writing check cancel re-run on in request PTO ask " \
+                "re-test re-write re-code test reach out notify monthly notebook script change call about no yes to " \
+                "analyze delete verify talk about refresh re-pull a attach item get working install session with " \
+                "without how-to of commit calculation delta deltas through debug correct function functions handle add move".split(
+    " ")
 for f in td_open:
     time = str(to_eastern(f["time"]).strftime("%b %d, %Y %I:%M:%S%p"))
     message = f["message"].split("||")
@@ -501,9 +427,16 @@ for f in td_open:
             <span class="datet">{time}</span>
         """)
     else:
+        redacted_message = []
+        for word in message.split(" "):
+            if word.lower() in allowed_words:
+                redacted_message.append(word)
+            else:
+                redacted_message.append(f'<font color="#fcd9d9">{"█" * len(word)}</font>')
+
         ms.append(f"""
             <span class="flavor">{logo} {flavor_text}</span><br>
-            Obfuscated: Industry/non-academia related work. Todoist ID {f["id"].replace("todoist_", '')}.<br>
+            {' '.join(redacted_message)}<br>
             <span class="datet">{time}</span>
         """)
 
@@ -542,27 +475,31 @@ for f in sifted:
     message = message[1]
     logo = get_logo(f["via"], flavor_text)
 
-    if "BCBS" not in flavor_text:
+    if "bcbs" not in flavor_text.lower():
         ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""
             <span class="flavor">{logo} {flavor_text}</span><br>
             {message}<br>
             <span class="datet">{time}</span>
         """)
     else:
+        redacted_message = []
+        for word in message.split(" "):
+            if word.lower() in allowed_words:
+                redacted_message.append(word)
+            else:
+                redacted_message.append(f'<font color="#fcd9d9">{"█" * len(word)}</font>')
+
         ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""
             <span class="flavor">{logo} {flavor_text}</span><br>
-            Obfuscated: Industry/non-academia related work. Todoist ID 
-            <a href="https://docs.google.com/spreadsheets/d/1UIy_M_aaMfCEhAZz9godjoRMCujdEmdT_NnzDaZF7dA/edit?usp=sharing">{f["id"].replace("todoist_", '')}</a>.<br>
+            {' '.join(redacted_message)}<br>
             <span class="datet">{time}</span>
         """)
-
 
     # ms.append(f"""
     #     <span class="flavor">{logo} {flavor_text}</span><br>
     #     {message}<br>
     #     <span class="datet">{time}</span>
     # """)
-
 
 '''<span style="font-weight: 400; font-size: 13px; margin-left: 0.3rem;">12 items</span>'''
 for date, ms in ms_date_dict.items():
@@ -577,7 +514,7 @@ for date, ms in ms_date_dict.items():
 <div class="message">
         {compile_ms}
 </div>
-    
+
     '''
 
 generate_heatmap(heatmap_data)
@@ -599,39 +536,31 @@ More<br>
 Currently tracking <b>@replace_me</b> contributions</span>
 '''.replace("@replace_me", str(len(heatmap_data)))
 
-"""
-### Workouts
-<img style="width:100%;" src="/public/workout_heatmap.png?{{ site.version }}" alt="Contributions calendar">
-<span class="datet" style="font-size: 60%; text-align: right; display: block;">
-(Workout data is still a WIP)</span>
-"""
+repo = Repo("dakilaledesma.github.io/")
+repo.remotes.origin.pull()
+event_file = open("dakilaledesma.github.io/_posts/2022-07-12-events.md")
+event_str = event_file.read()
+event_file.close()
+if markdown_string != event_str or new_day():
+    event_file_w = open("dakilaledesma.github.io/_posts/2022-07-12-events.md", 'w')
+    event_file_w.write(markdown_string)
+    event_file_w.close()
 
-if not debugging:
-    repo = Repo("dakilaledesma.github.io/")
-    repo.remotes.origin.pull()
-    event_file = open("dakilaledesma.github.io/_posts/2022-07-12-events.md")
-    event_str = event_file.read()
-    event_file.close()
-    if markdown_string != event_str or new_day():
-        event_file_w = open("dakilaledesma.github.io/_posts/2022-07-12-events.md", 'w')
-        event_file_w.write(markdown_string)
-        event_file_w.close()
+    contrib_file_w = open("dakilaledesma.github.io/_posts/2022-07-13-contributions.md", 'w')
+    contrib_file_w.write(contrib_string)
+    contrib_file_w.close()
 
-        contrib_file_w = open("dakilaledesma.github.io/_posts/2022-07-13-contributions.md", 'w')
-        contrib_file_w.write(contrib_string)
-        contrib_file_w.close()
+    with open("dakilaledesma.github.io/_config.yml") as f:
+        config = yaml.safe_load(f)
 
-        with open("dakilaledesma.github.io/_config.yml") as f:
-            config = yaml.safe_load(f)
+    version = [int(a) for a in str(config["version"]).split('.')]
+    version[-1] += 1
+    config["version"] = '.'.join([str(b) for b in version])
 
-        version = [int(a) for a in str(config["version"]).split('.')]
-        version[-1] += 1
-        config["version"] = '.'.join([str(b) for b in version])
+    with open("dakilaledesma.github.io/_config.yml", "w") as f:
+        yaml.dump(config, f)
 
-        with open("dakilaledesma.github.io/_config.yml", "w") as f:
-            yaml.dump(config, f)
-
-        repo.git.add(update=True)
-        repo.index.commit("Automated machine user commit. Beep boop!")
-        origin = repo.remote(name='origin')
-        origin.push()
+    repo.git.add(update=True)
+    repo.index.commit("Automated machine user commit. Beep boop!")
+    origin = repo.remote(name='origin')
+    origin.push()

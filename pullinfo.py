@@ -422,9 +422,7 @@ for f in td_open:
     logo = get_logo(f["via"], flavor_text)
 
     if "BCBS" in flavor_text:
-        alphanum_message = "".join([c if (c.isalnum() or c == '_') else " " for c in message])
-
-        for word in alphanum_message.split(" "):
+        for word in message.split(" "):
             if word.lower() not in allowed_words and word != '':
                 message = message.replace(word,
                                           f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
@@ -471,9 +469,7 @@ for f in sifted:
     logo = get_logo(f["via"], flavor_text)
 
     if "bcbs" in flavor_text.lower():
-        alphanum_message = "".join([c if (c.isalnum() or c == '_') else " " for c in message])
-
-        for word in alphanum_message.split(" "):
+        for word in message.split(" "):
             if word.lower() not in allowed_words and word != '':
                 message = message.replace(word,
                                           f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')

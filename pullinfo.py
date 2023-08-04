@@ -420,26 +420,20 @@ for f in td_open:
     flavor_text = message[0]
     message = message[1]
     logo = get_logo(f["via"], flavor_text)
-    if "BCBS" not in flavor_text:
-        ms.append(f"""
-            <span class="flavor">{logo} {flavor_text}</span><br>
-            {message}<br>
-            <span class="datet">{time}</span>
-        """)
-    else:
-        redacted_message = []
-        for word in message.split(" "):
-            if word.lower() in allowed_words:
-                redacted_message.append(word)
-            else:
-                redacted_message.append(
-                    f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
 
-        ms.append(f"""
-            <span class="flavor">{logo} {flavor_text}</span><br>
-            {' '.join(redacted_message)}<br>
-            <span class="datet">{time}</span>
-        """)
+    if "BCBS" in flavor_text:
+        alphanum_message = "".join([c if (c.isalnum() or c == '_') else " " for c in message])
+
+        for word in alphanum_message.split(" "):
+            if word.lower() not in allowed_words and word != '':
+                message = message.replace(word,
+                                          f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
+
+    ms.append(f"""
+        <span class="flavor">{logo} {flavor_text}</span><br>
+        {message}<br>
+        <span class="datet">{time}</span>
+    """)
 
 compile_ms = '\n<hr style="margin:0.42rem">\n'.join(ms)
 markdown_string += f'''
@@ -476,26 +470,19 @@ for f in sifted:
     message = message[1]
     logo = get_logo(f["via"], flavor_text)
 
-    if "bcbs" not in flavor_text.lower():
-        ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""
+    if "bcbs" in flavor_text.lower():
+        alphanum_message = "".join([c if (c.isalnum() or c == '_') else " " for c in message])
+
+        for word in alphanum_message.split(" "):
+            if word.lower() not in allowed_words and word != '':
+                message = message.replace(word,
+                                          f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
+
+    ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""
             <span class="flavor">{logo} {flavor_text}</span><br>
             {message}<br>
             <span class="datet">{time}</span>
-        """)
-    else:
-        redacted_message = []
-        for word in message.split(" "):
-            if word.lower() in allowed_words:
-                redacted_message.append(word)
-            else:
-                redacted_message.append(
-                    f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
-
-        ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""
-            <span class="flavor">{logo} {flavor_text}</span><br>
-            {' '.join(redacted_message)}<br>
-            <span class="datet">{time}</span>
-        """)
+    """)
 
     # ms.append(f"""
     #     <span class="flavor">{logo} {flavor_text}</span><br>

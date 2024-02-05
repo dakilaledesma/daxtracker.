@@ -51,7 +51,16 @@ def new_day():
 
 
 def generate_heatmap(data):
-    dates = [datetime.datetime.today() - datetime.timedelta(days=i) for i in range(364)]
+    exclude_start = datetime.datetime(2023, 8, 13)
+    exclude_end = datetime.datetime(2023, 12, 31)
+
+    days_to_exclude = (exclude_end - exclude_start).days + 1
+
+    dates = [datetime.datetime.today() - datetime.timedelta(days=i) for i in range(364 + days_to_exclude) if
+             not (exclude_start <= (datetime.datetime.today() - datetime.timedelta(days=i)) <= exclude_end)]
+
+    dates = dates[:365]
+
     while True:
         if dates[-1].weekday() != 6:
             dates.append(dates[-1] - datetime.timedelta(days=1))
@@ -520,6 +529,7 @@ Less
 <span style="color: #00441b;">■</span>
 More<br>
 Currently tracking <b>@replace_me</b> contributions</span>
+<br>(daxtracker. was broken from August 2023 to January 2024, these have been removed from the heatmap)
 '''.replace("@replace_me", str(len(heatmap_data)))
 
 repo = Repo("dakilaledesma.github.io/")

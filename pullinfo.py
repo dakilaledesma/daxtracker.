@@ -528,8 +528,9 @@ Less
 <span style="color: #11803d;">■</span>
 <span style="color: #00441b;">■</span>
 More<br>
-Currently tracking <b>@replace_me</b> contributions</span>
-<br>(daxtracker. was broken from August 2023 to January 2024, these have been removed from the heatmap)
+Currently tracking <b>@replace_me</b> contributions
+<br>(daxtracker. was broken from August 2023 to January 2024, these have been removed from the heatmap)</span>
+
 '''.replace("@replace_me", str(len(heatmap_data)))
 
 repo = Repo("dakilaledesma.github.io/")

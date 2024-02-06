@@ -420,7 +420,7 @@ markdown_string += '\n### In-progress Items\n'
 ms = []
 allowed_words = "investigate on meeting send respond response email build code new to test modify and create data " \
                 "DSCoE rename finish convert implementation write writing check cancel re-run on in request PTO ask " \
-                "re-test re-write re-code test reach out notify monthly notebook script change call about no yes to " \
+                "re-test re-write re-code test reach out notify monthly script change call about no yes to " \
                 "analyze delete verify talk about refresh re-pull a attach item get working install session with " \
                 "without how-to of commit calculation delta deltas through debug correct function functions handle add move".split(
     " ")
@@ -431,7 +431,7 @@ for f in td_open:
     message = message[1]
     logo = get_logo(f["via"], flavor_text)
 
-    if "BCBS" in flavor_text:
+    if "BCBS" in flavor_text or "SP " in flavor_text:
         for word in message.split(" "):
             if word.lower() not in allowed_words and word != '':
                 message = message.replace(word,
@@ -478,7 +478,7 @@ for f in sifted:
     message = message[1]
     logo = get_logo(f["via"], flavor_text)
 
-    if "bcbs" in flavor_text.lower():
+    if "bcbs" in flavor_text.lower() or "sp " in flavor_text.lower():
         for word in message.split(" "):
             if word.lower() not in allowed_words and word != '':
                 message = message.replace(word,
@@ -529,7 +529,7 @@ Less
 <span style="color: #00441b;">■</span>
 More<br>
 Currently tracking <b>@replace_me</b> contributions
-<br>(daxtracker. was broken from August 2023 to January 2024, these have been removed from the heatmap)</span>
+<br>*daxtracker. was broken from 08/2023 to 12/2023, these have been removed from the heatmap</span>
 
 '''.replace("@replace_me", str(len(heatmap_data)))
 

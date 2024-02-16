@@ -431,7 +431,10 @@ for f in td_open:
     message = message[1]
     logo = get_logo(f["via"], flavor_text)
 
-    if "BCBS" in flavor_text or "SP " in flavor_text:
+    if any(["bcbs" in flavor_text.lower(),
+            "sp " in flavor_text.lower(),
+            "sneakpeek" in flavor_text.lower()]):
+        message = ''.join([char if char.isalnum() or char == ' ' else ' ' for char in message])
         for word in message.split(" "):
             if word.lower() not in allowed_words and word != '':
                 message = message.replace(word,
@@ -478,7 +481,10 @@ for f in sifted:
     message = message[1]
     logo = get_logo(f["via"], flavor_text)
 
-    if "bcbs" in flavor_text.lower() or "sp " in flavor_text.lower():
+    if any(["bcbs" in flavor_text.lower(),
+            "sp " in flavor_text.lower(),
+            "sneakpeek" in flavor_text.lower()]):
+        message = ''.join([char if char.isalnum() or char == ' ' else '' for char in message])
         for word in message.split(" "):
             if word.lower() not in allowed_words and word != '':
                 message = message.replace(word,

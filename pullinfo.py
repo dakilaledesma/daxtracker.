@@ -432,14 +432,17 @@ for f in td_open:
     logo = get_logo(f["via"], flavor_text)
 
     if any(["bcbs" in flavor_text.lower(),
-            "sp " in flavor_text.lower(),
-            "sneakpeek" in flavor_text.lower()]):
-        message = ''.join([char if char.isalnum() or char == ' ' else ' ' for char in message])
-        for word in message.split(" "):
+        "sp " in flavor_text.lower(),
+        "sneakpeek" in flavor_text.lower()]):
+        words = message.split()
+        redacted_words = []
+        for word in words:
             if word.lower() not in allowed_words and word != '':
-                message = message.replace(word,
-                                          f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
-
+                redacted_words.append(f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
+            else:
+                redacted_words.append(word)         
+    message = ' '.join(redacted_words)
+    
     ms.append(f"""
         <span class="flavor">{logo} {flavor_text}</span><br>
         {message}<br>

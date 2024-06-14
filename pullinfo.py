@@ -418,10 +418,10 @@ title: Events
 
 markdown_string += '\n### In-progress Items\n'
 ms = []
-allowed_words = "investigate on meeting send respond response email build code new to test modify and create data " \
-                "DSCoE rename finish convert implementation write writing check cancel re-run on in request PTO ask " \
-                "re-test re-write re-code test reach out notify monthly script change call about no yes to " \
-                "analyze delete verify talk about refresh re-pull a attach item get working install session with " \
+allowed_words = "investigate on meeting build code new to test modify and create data " \
+                "DSCoE rename finish convert implementation write writing check cancel re-run on in request PTO " \
+                "re-test re-write re-code test monthly script change about no yes to " \
+                "analyze delete verify refresh re-pull a attach item get working install session with " \
                 "without how-to of commit calculation delta deltas through debug correct function functions handle add move".split(
     " ")
 for f in td_open:
@@ -495,7 +495,7 @@ for f in sifted:
             else:
                 redacted_words.append(word)         
         message = ' '.join(redacted_words)
-        
+
     ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""
             <span class="flavor">{logo} {flavor_text}</span><br>
             {message}<br>

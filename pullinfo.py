@@ -27,6 +27,11 @@ with open("dakilaledesma.github.io/_config.yml") as f:
 
 version = str([int(a) for a in str(config["version"]).split('.')][-1])
 
+with open("allowed_words.txt") as f:
+    allowed_words = f.read().split(' ')
+
+with open("redacted_projects.txt") as f:
+    redacted_projects = f.read().split(' ')
 
 def new_day():
     current = datetime.datetime.today()
@@ -418,12 +423,6 @@ title: Events
 
 markdown_string += '\n### In-progress Items\n'
 ms = []
-allowed_words = "investigate on meeting build code new to test modify and create data " \
-                "DSCoE rename finish convert implementation write writing check cancel re-run on in request PTO " \
-                "re-test re-write re-code test monthly script change about no yes to " \
-                "analyze delete verify refresh re-pull a attach item get working install session with " \
-                "without how-to of commit calculation delta deltas through debug correct function functions handle add move".split(
-    " ")
 for f in td_open:
     time = str(to_eastern(f["time"]).strftime("%b %d, %Y %I:%M:%S%p"))
     message = f["message"].split("||")
@@ -431,9 +430,7 @@ for f in td_open:
     message = message[1]
     logo = get_logo(f["via"], flavor_text)
 
-    if any(["bcbs" in flavor_text.lower(),
-        "sp " in flavor_text.lower(),
-        "sneakpeek" in flavor_text.lower()]):
+    if any([v in flavor_text.lower() for v in [p.lower() for p in redacted_projects]]):
         words = message.split()
         redacted_words = []
         for word in words:
@@ -484,9 +481,9 @@ for f in sifted:
     message = message[1]
     logo = get_logo(f["via"], flavor_text)
 
-    if any(["bcbs" in flavor_text.lower(),
-        "sp " in flavor_text.lower(),
-        "sneakpeek" in flavor_text.lower()]):
+    
+
+    if any([v in flavor_text.lower() for v in [p.lower() for p in redacted_projects]]):
         words = message.split()
         redacted_words = []
         for word in words:

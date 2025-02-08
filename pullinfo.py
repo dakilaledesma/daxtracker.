@@ -281,7 +281,7 @@ def todoist_open():
             sect_id_text = ''
 
         m = f"{prio_text} Todoist task{sect_id_text}||{result['content']}{desc_text}"
-        if result['content'][0] != "*":
+        if result['content'][0] != "*" and 'dailies' not in section_dict[section_id].lower():
             message_list.append(
                 {"time": dtime, "message": m, "via": "Todoist", "id": f'todoist_{result["id"]}', "mtime": mtime,
                  "version": version, "priority": result["priority"]})

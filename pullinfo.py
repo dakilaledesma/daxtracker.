@@ -33,6 +33,9 @@ with open("allowed_words.txt") as f:
 with open("redacted_projects.txt") as f:
     redacted_projects = f.read().split(' ')
 
+with open("ultra_redacted_projects.txt") as f:
+    ultra_redacted_projects = f.read().split(' ')
+
 def new_day():
     current = datetime.datetime.today()
     est = pytz.timezone('US/Eastern')
@@ -430,14 +433,40 @@ for f in td_open:
     message = message[1]
     logo = get_logo(f["via"], flavor_text)
 
-    if any([v in flavor_text.lower() for v in [p.lower() for p in redacted_projects]]):
+    # Check for ultra-redacted projects (redact both flavor text and message)
+    ultra_redact = any(v in flavor_text.lower() for v in [p.lower() for p in ultra_redacted_projects])
+    # Check for normal redacted projects (redact message only)
+    normal_redact = any(v in flavor_text.lower() for v in [p.lower() for p in redacted_projects])
+
+    if ultra_redact:
+        # Redact flavor text
+        flavor_words = flavor_text.split()
+        redacted_flavor = []
+        for word in flavor_words:
+            if word.lower() not in allowed_words and word != '':
+                redacted_flavor.append(f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
+            else:
+                redacted_flavor.append(word)
+        flavor_text = ' '.join(redacted_flavor)
+        
+        # Redact message
         words = message.split()
         redacted_words = []
         for word in words:
             if word.lower() not in allowed_words and word != '':
                 redacted_words.append(f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
             else:
-                redacted_words.append(word)         
+                redacted_words.append(word)
+        message = ' '.join(redacted_words)
+    elif normal_redact:
+        # Redact message only
+        words = message.split()
+        redacted_words = []
+        for word in words:
+            if word.lower() not in allowed_words and word != '':
+                redacted_words.append(f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
+            else:
+                redacted_words.append(word)
         message = ' '.join(redacted_words)
 
     ms.append(f"""
@@ -483,14 +512,40 @@ for f in sifted:
 
     
 
-    if any([v in flavor_text.lower() for v in [p.lower() for p in redacted_projects]]):
+    # Check for ultra-redacted projects (redact both flavor text and message)
+    ultra_redact = any(v in flavor_text.lower() for v in [p.lower() for p in ultra_redacted_projects])
+    # Check for normal redacted projects (redact message only)
+    normal_redact = any(v in flavor_text.lower() for v in [p.lower() for p in redacted_projects])
+
+    if ultra_redact:
+        # Redact flavor text
+        flavor_words = flavor_text.split()
+        redacted_flavor = []
+        for word in flavor_words:
+            if word.lower() not in allowed_words and word != '':
+                redacted_flavor.append(f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
+            else:
+                redacted_flavor.append(word)
+        flavor_text = ' '.join(redacted_flavor)
+        
+        # Redact message
         words = message.split()
         redacted_words = []
         for word in words:
             if word.lower() not in allowed_words and word != '':
                 redacted_words.append(f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
             else:
-                redacted_words.append(word)         
+                redacted_words.append(word)
+        message = ' '.join(redacted_words)
+    elif normal_redact:
+        # Redact message only
+        words = message.split()
+        redacted_words = []
+        for word in words:
+            if word.lower() not in allowed_words and word != '':
+                redacted_words.append(f'<span style="text-decoration: underline dotted; -webkit-text-decoration: underline dotted;">{" " * len(word)}</span>')
+            else:
+                redacted_words.append(word)
         message = ' '.join(redacted_words)
 
     ms_date_dict[time_eastern.strftime("%A %b. %d, %Y")].append(f"""

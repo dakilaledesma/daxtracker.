@@ -434,9 +434,9 @@ for f in td_open:
     logo = get_logo(f["via"], flavor_text)
 
     # Check for ultra-redacted projects (redact both flavor text and message)
-    ultra_redact = any(v in flavor_text.lower() for v in [p.lower() for p in ultra_redacted_projects])
+    ultra_redact = any(v in flavor_text.lower() or v in message.lower() for v in [p.lower() for p in ultra_redacted_projects])
     # Check for normal redacted projects (redact message only)
-    normal_redact = any(v in flavor_text.lower() for v in [p.lower() for p in redacted_projects])
+    normal_redact = any(v in flavor_text.lower() or v in message.lower() for v in [p.lower() for p in redacted_projects])
 
     if ultra_redact:
         # Redact flavor text
